@@ -14,6 +14,7 @@ public class Object {
     private double zVerts[];
     private double vertMatrix[][];
     private double x;
+    private double renderer = 4;
 
     public double getX() {
         return x;
@@ -31,19 +32,17 @@ public class Object {
         this.y = y;
     }
 
+    public void switchRenderType(){
+        renderer++;
+        if (renderer > 5) renderer = 1;
+    }
     private double y;
     private double z;
-    private double sizeMult;
-    private double a = 1;
-    private double fov = 70;
-    private double Zfar = 1000;
-    private double Znear = .1;
-    private double zp = Zfar + Znear;
-    private double zm = Zfar + Znear;
-    private  double angle = 45;
+    private int sizeMult;
 
 
-    public Object(double[] vertices, double x, double y, double z, double sizeMult){
+
+    public Object(double[] vertices, double x, double y, double z, int sizeMult){
         this.facesMount = vertices.length  / 3;
         this.vertices = vertices;
         this.x = x;
@@ -62,8 +61,7 @@ public class Object {
             yVerts[i] = vertices[i * 3 + 1];
             zVerts[i] = vertices[i * 3 + 2];
         }
-        printArray(xVerts);
-
+        //printArray(xVerts);
 
         vertMatrix = new double[vertices.length / 3][4];
         for (int i = 0; i < vertices.length / 3 ; i++) {
@@ -73,19 +71,16 @@ public class Object {
             vertMatrix[i][3] = 1;
 
         }
-        transformationMatrix[0][0] = sizeMult;
-        transformationMatrix[1][1] = sizeMult;
-        transformationMatrix[2][2] = sizeMult;
+        transformationMatrix[0][0] = 100;
+        transformationMatrix[1][1] = 100;
+        transformationMatrix[2][2] = 100;
 
-        vertMatrix = multiply(vertMatrix, matrix);
+        vertMatrix = matrixMath.multiply(vertMatrix, matrixMath.matrix);
+
+        vertMatrix = matrixMath.multiply(vertMatrix, transformationMatrix);
+        vertMatrix = matrixMath.multiply(vertMatrix, translationMatrix);
 
 
-
-        vertMatrix = multiply(vertMatrix, transformationMatrix);
-        vertMatrix = multiply(vertMatrix, translationMatrix);
-
-        vertMatrix = multiply(vertMatrix, rotZMatrix);
-        vertMatrix = multiply(vertMatrix, rotXMatrix);
         for (int i = 0; i < vertMatrix.length; i++) {
             xVerts[i] = vertMatrix[i][0];
             yVerts[i] = vertMatrix[i][1];
@@ -94,6 +89,20 @@ public class Object {
 
 
     }
+
+    public double transformationMatrix[][] = {
+            {50, 0, 0, 1},
+            {0, 50, 0, 1},
+            {0, 0, 50, 1},
+            {0, 0, 0, 1}
+    };
+
+    public double translationMatrix[][] = {
+            {1, 0, 0, x},
+            {0, 1, 0, y},
+            {0, 0, 1, z},
+            {0, 0, 0, 1}
+    };
 
     public void printMat(double[][] matrix){
         for (int k = 0; k < matrix.length; k++) {
@@ -110,98 +119,70 @@ public class Object {
         }
     }
 
-    public double matrix[][] = {
-        {(1/Math.tan(fov/2))/a, 0, 0, 0},
-        {0, 1/Math.tan(fov/2), 0, 0},
-        {0, 0, -zp/zm, -(2*Zfar*Znear)/zm},
-        {0, 0, -1, 0}
-    };
 
-    public double transformationMatrix[][] = {
-            {50, 0, 0, 1},
-            {0, 50, 0, 1},
-            {0, 0, 50, 1},
-            {0, 0, 0, 1}
-    };
-
-    public double translationMatrix[][] = {
-            {1, 0, 0, 2000},
-            {0, 1, 0, 2000},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1}
-    };
-
-    public void calculateOrientation(){
-
-    }
-
-    public double rotXMatrix[][] = {
-            {1, 0, 0, 0},
-            {0, Math.cos(angle), -Math.sin(angle), 0},
-            {0, Math.sin(angle), Math.cos(angle), 0},
-            {0, 0, 0, 0}
-    };
-
-    public double rotYMatrix[][] = {
-            {Math.cos(angle), 0, Math.sin(angle), 0},
-            {0, 1, 0, 0},
-            {-Math.sin(angle), 0, Math.cos(angle), 0},
-            {0, 0, 0, 1}
-    };
-
-    public double rotZMatrix[][] = {
-            {Math.cos(angle), -Math.sin(angle), 0, 0},
-            {Math.sin(angle), Math.cos(angle), 0, 0},
-            {0, 0 ,1, 0},
-            {0, 0, 0, 0}
-
-    };
-
-    public double rotMatrix[][] = {
-            {1/Math.sqrt(2), 1/Math.sqrt(6), 1/Math.sqrt(3), 0},
-            {-Math.sqrt(3), 1/Math.sqrt(3), 0, 0},
-            {-1/Math.sqrt(2), 1/Math.sqrt(6), 1/Math.sqrt(3), 0},
-            {0, 0, 0, 0}
-
-    };
-
-    public double[][] multiply(double[][] a, double[][] b) {
-        int rowsInA = a.length;
-        int columnsInA = a[0].length; // same as rows in B
-        int columnsInB = b[0].length;
-        double[][] c = new double[rowsInA][columnsInB];
-        for (int i = 0; i < rowsInA; i++) {
-            for (int j = 0; j < columnsInB; j++) {
-                for (int k = 0; k < columnsInA; k++) {
-                    c[i][j] = c[i][j] + a[i][k] * b[k][j];
-                }
-            }
-        }
-        return c;
-    }
 
     private  double offset = 1;
     public void draw(GraphicsContext gc){
 
 
+        vertMatrix = matrixMath.multiply(vertMatrix, matrixMath.rotYMatrix);
+        vertMatrix = matrixMath.multiply(vertMatrix, matrixMath.rotXMatrix);
+        vertMatrix = matrixMath.multiply(vertMatrix, matrixMath.rotZMatrix);
+
+
         //y = Math.cos(offset) * 100 + 250;
 
 
-        /*
-        for (int i = 0; i < vertMatrix.length; i++) {
-            gc.setStroke(Color.BLACK);
-            gc.setFill(Color.GRAY);
-            gc.fillOval(vertMatrix[i][0] + x, vertMatrix[i][1] + y, 10, 10);
+
+
+
+
+
+
+
+        if(renderer == 3 || renderer == 4 || renderer == 5) {
+            gc.setFill(Color.SANDYBROWN);
+            for (int i = 0; i < vertMatrix.length / 3; i++) {
+                double tempvertx[] = {vertMatrix[i * 3][0] + x,
+                        vertMatrix[i * 3 + 2][0] + x,
+                        vertMatrix[i * 3 + 1][0] + x,
+                        vertMatrix[i * 3 + 2][0] + x,
+                        vertMatrix[i * 3 + 1][0] + x,
+                        vertMatrix[i * 3][0] + x};
+                double tempverty[] = {
+                        vertMatrix[i * 3][1] + y,
+                        vertMatrix[i * 3 + 2][1] + y,
+                        vertMatrix[i * 3 + 1][1] + y,
+                        vertMatrix[i * 3 + 2][1] + y,
+                        vertMatrix[i * 3 + 1][1] + y,
+                        vertMatrix[i * 3][1] + y
+
+                };
+
+                gc.fillPolygon(tempvertx, tempverty, 3);
+            }
         }
 
-         */
-        for (int i = 0; i < vertMatrix.length / 3; i++) {
+        if(renderer == 1 || renderer == 4 || renderer == 5) {
+            for (int i = 0; i < vertMatrix.length / 3; i++) {
 
 
-            gc.strokeLine(vertMatrix[i * 3][0] + x, vertMatrix[i * 3][1]+ y, vertMatrix[i * 3 + 2][0]+ x, vertMatrix[i * 3 + 2][1]+ y);
-            gc.strokeLine(vertMatrix[i * 3 + 2][0]+ x, vertMatrix[i * 3 + 2][1]+ y, vertMatrix[i * 3 + 1][0]+ x, vertMatrix[i * 3 + 1][1]+ y);
-            gc.strokeLine(vertMatrix[i * 3 + 1][0]+ x, vertMatrix[i * 3 + 1][1]+ y, vertMatrix[i * 3][0]+ x, vertMatrix[i * 3][1]+ y);
+                gc.strokeLine(vertMatrix[i * 3][0] + x, vertMatrix[i * 3][1] + y, vertMatrix[i * 3 + 2][0] + x, vertMatrix[i * 3 + 2][1] + y);
+                gc.strokeLine(vertMatrix[i * 3 + 2][0] + x, vertMatrix[i * 3 + 2][1] + y, vertMatrix[i * 3 + 1][0] + x, vertMatrix[i * 3 + 1][1] + y);
+                gc.strokeLine(vertMatrix[i * 3 + 1][0] + x, vertMatrix[i * 3 + 1][1] + y, vertMatrix[i * 3][0] + x, vertMatrix[i * 3][1] + y);
 
+            }
+
+        }
+
+        if(renderer == 2 || renderer == 5) {
+            gc.setFill(Color.GRAY);
+
+            for (int i = 0; i < vertMatrix.length; i++) {
+                gc.setStroke(Color.BLACK);
+                gc.setFill(Color.GRAY);
+                gc.fillOval(vertMatrix[i][0] + x - 2.5, vertMatrix[i][1] + y - 2.5, 5, 5);
+            }
         }
 
     }
